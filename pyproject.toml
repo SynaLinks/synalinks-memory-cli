@@ -1,0 +1,30 @@
+[project]
+name = "synalinks-memory-cli"
+version = "0.1.0"
+description = "CLI for the Synalinks Memory API"
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.10"
+dependencies = [
+    "synalinks-memory>=0.1.0",
+    "click>=8.1",
+    "rich>=13.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.uv]
+package = true
+
+[tool.uv.sources]
+synalinks-memory = { path = "../synalinks-memory-python-sdk" }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+synalinks = "synalinks_memory_cli.main:cli"
