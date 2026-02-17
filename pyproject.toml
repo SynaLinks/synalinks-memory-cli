@@ -1,6 +1,6 @@
 [project]
 name = "synalinks-memory-cli"
-version = "0.1.0"
+dynamic = ["version"]
 description = "CLI for the Synalinks Memory API"
 readme = "README.md"
 license = "Apache-2.0"
@@ -21,6 +21,9 @@ package = true
 
 [tool.uv.sources]
 synalinks-memory = { path = "../synalinks-memory-python-sdk" }
+
+[tool.hatch.version]
+path = "synalinks_memory_cli/version.py"
 
 [build-system]
 requires = ["hatchling"]

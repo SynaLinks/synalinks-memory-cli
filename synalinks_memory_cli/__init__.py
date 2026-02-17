@@ -1,3 +1,5 @@
+# License Apache 2.0: (c) 2026 Yoan Sallami (Synalinks Team)
+
 """Synalinks Memory CLI."""
 
-__version__ = "0.1.0"
+from synalinks_memory_cli.version import __version__

@@ -1,3 +1,5 @@
+# License Apache 2.0: (c) 2026 Yoan Sallami (Synalinks Team)
+
 """Synalinks Memory CLI — query your tables, concepts, and rules from the terminal."""
 
 from __future__ import annotations
@@ -118,14 +120,14 @@ def execute(ctx: click.Context, predicate: str, limit: int, offset: int, fmt: st
         if output is None:
             output = f"{predicate}.{fmt}"
         try:
-            data = client.execute(predicate, format=fmt, limit=limit, offset=offset, output=output)
+            written = client.execute(predicate, format=fmt, limit=limit, offset=offset, output=output)
         except SynalinksError as exc:
             err_console.print(f"[red]Error:[/red] {exc.message}")
             sys.exit(1)
         finally:
             client.close()
 
-        size_kb = len(data) / 1024
+        size_kb = written / 1024
         console.print(f"[green]Saved[/green] {output} ({size_kb:.1f} KB)")
         return
 
@@ -146,10 +148,11 @@ def execute(ctx: click.Context, predicate: str, limit: int, offset: int, fmt: st
         title=f"{predicate}",
         caption=f"Showing {result.row_count} of {result.total_rows} rows (offset {result.offset})",
     )
-    for col in result.columns:
-        table.add_column(col.name)
+    col_names = [col.name for col in result.columns]
+    for name in col_names:
+        table.add_column(name)
     for row in result.rows:
-        table.add_row(*[_format_cell(row.get(col.name)) for col in result.columns])
+        table.add_row(*[_format_cell(row.get(name)) for name in col_names])
 
     console.print(table)
 
@@ -184,10 +187,11 @@ def search(ctx: click.Context, predicate: str, keywords: str, limit: int, offset
         title=f'Search "{keywords}" in {predicate}',
         caption=f"Showing {result.row_count} of {result.total_rows} rows",
     )
-    for col in result.columns:
-        table.add_column(col.name)
+    col_names = [col.name for col in result.columns]
+    for name in col_names:
+        table.add_column(name)
     for row in result.rows:
-        table.add_row(*[_format_cell(row.get(col.name)) for col in result.columns])
+        table.add_row(*[_format_cell(row.get(name)) for name in col_names])
 
     console.print(table)
 
@@ -253,11 +257,14 @@ def _ask_cmd(ctx: click.Context, question: tuple[str, ...]) -> None:
 # ---------------------------------------------------------------------------
 
 
-def _format_cell(value: object) -> Text:
+_NULL = Text("null", style="dim italic")
+
+
+def _format_cell(value: object) -> str | Text:
     """Format a cell value for display."""
     if value is None:
-        return Text("null", style="dim italic")
+        return _NULL
     s = str(value)
     if len(s) > 80:
-        s = s[:77] + "..."
-    return Text(s)
+        return s[:77] + "..."
+    return s
