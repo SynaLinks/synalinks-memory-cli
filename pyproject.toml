@@ -6,7 +6,7 @@ readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.10"
 dependencies = [
-    "synalinks-memory>=0.1.0",
+    "synalinks-memory>=0.0.002",
     "click>=8.1",
     "rich>=13.0",
 ]
@@ -19,8 +19,6 @@ dev = [
 [tool.uv]
 package = true
 
-[tool.uv.sources]
-synalinks-memory = { path = "../synalinks-memory-python-sdk" }
 
 [tool.hatch.version]
 path = "synalinks_memory_cli/version.py"
