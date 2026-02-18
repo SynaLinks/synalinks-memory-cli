@@ -30,4 +30,4 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.scripts]
-synalinks = "synalinks_memory_cli.main:cli"
+synalinks-memory-cli = "synalinks_memory_cli.main:cli"

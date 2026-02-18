@@ -34,42 +34,42 @@ export SYNALINKS_API_KEY="synalinks_..."
 ### Add a file
 
 ```bash
-synalinks add data/sales.csv
-synalinks add data/events.parquet --name Events --description "Event log" --overwrite
+synalinks-memory-cli add data/sales.csv
+synalinks-memory-cli add data/events.parquet --name Events --description "Event log" --overwrite
 ```
 
 ### Ask a question (while learning concepts and rules)
 
 ```bash
-synalinks "What were the top 5 products by revenue last month?"
-synalinks How are sales doing this quarter
+synalinks-memory-cli "What were the top 5 products by revenue last month?"
+synalinks-memory-cli How are sales doing this quarter
 ```
 
 ### List predicates
 
 ```bash
-synalinks list
+synalinks-memory-cli list
 ```
 
 ### Execute a predicate
 
 ```bash
-synalinks execute Users
-synalinks execute Users --limit 50 --offset 10
+synalinks-memory-cli execute Users
+synalinks-memory-cli execute Users --limit 50 --offset 10
 ```
 
 ### Search
 
 ```bash
-synalinks search Users "alice"
+synalinks-memory-cli search Users "alice"
 ```
 
 ### Export data as a file
 
 ```bash
-synalinks execute Users --format csv
-synalinks execute Users --format parquet -o users.parquet
-synalinks execute Users -f json --limit 500
+synalinks-memory-cli execute Users --format csv
+synalinks-memory-cli execute Users --format parquet -o users.parquet
+synalinks-memory-cli execute Users -f json --limit 500
 ```
 
 ### Options
