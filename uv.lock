@@ -336,7 +336,6 @@ wheels = [
 
 [[package]]
 name = "synalinks-memory"
-version = "0.1.0"
 source = { directory = "../synalinks-memory-python-sdk" }
 dependencies = [
     { name = "httpx" },
@@ -354,7 +353,6 @@ dev = [{ name = "pytest", specifier = ">=8.0" }]
 
 [[package]]
 name = "synalinks-memory-cli"
-version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "click" },

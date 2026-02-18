@@ -10,7 +10,7 @@ import click
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
-from synalinks_memory import SynalinksError, SynalinksMemory
+from synalinks_memory import AskAnswerEvent, AskStepEvent, SynalinksError, SynalinksMemory
 
 console = Console()
 err_console = Console(stderr=True)
@@ -241,7 +241,13 @@ def _ask_cmd(ctx: click.Context, question: tuple[str, ...]) -> None:
     full_question = " ".join(question)
     client = _get_client(ctx.obj["api_key"], ctx.obj["base_url"])
     try:
-        answer = client.ask(full_question)
+        answer = ""
+        with console.status("[bold cyan]Thinking...", spinner="dots") as status:
+            for event in client.ask_stream(full_question):
+                if isinstance(event, AskStepEvent):
+                    status.update(f"[bold cyan]{event.label}")
+                elif isinstance(event, AskAnswerEvent):
+                    answer = event.answer
     except SynalinksError as exc:
         err_console.print(f"[red]Error:[/red] {exc.message}")
         sys.exit(1)
