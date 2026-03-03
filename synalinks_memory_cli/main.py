@@ -101,13 +101,14 @@ def list_predicates(ctx: click.Context) -> None:
 @click.argument("predicate")
 @click.option("--limit", "-n", default=20, show_default=True, help="Max rows to return.")
 @click.option("--offset", default=0, show_default=True, help="Row offset for pagination.")
-@click.option("--format", "-f", "fmt", default=None, type=click.Choice(["json", "csv", "parquet"]), help="Export as a file instead of a table.")
-@click.option("--output", "-o", default=None, help="Output file path (defaults to <predicate>.<format>). Requires --format.")
+@click.option("--format", "-f", "fmt", default=None, type=click.Choice(["json", "csv", "parquet"]), help="Output format (prints to stdout unless -o is given).")
+@click.option("--output", "-o", default=None, help="Save to file instead of stdout. Requires --format.")
 @click.pass_context
 def execute(ctx: click.Context, predicate: str, limit: int, offset: int, fmt: str | None, output: str | None) -> None:
     """Fetch rows from a table, concept, or rule.
 
-    Without --format, prints a rich table. With --format, saves to a file.
+    Without --format, prints a rich table. With --format, outputs formatted
+    data to stdout (pipeable). Use -o to save to a file instead.
     """
     if output and not fmt:
         err_console.print("[red]Error:[/red] --output requires --format (-f).")
@@ -115,10 +116,8 @@ def execute(ctx: click.Context, predicate: str, limit: int, offset: int, fmt: st
 
     client = _get_client(ctx.obj["api_key"], ctx.obj["base_url"])
 
-    # --- File extract mode ---
-    if fmt:
-        if output is None:
-            output = f"{predicate}.{fmt}"
+    # --- File export mode (--format with --output) ---
+    if fmt and output:
         try:
             written = client.execute(predicate, format=fmt, limit=limit, offset=offset, output=output)
         except SynalinksError as exc:
@@ -129,6 +128,19 @@ def execute(ctx: click.Context, predicate: str, limit: int, offset: int, fmt: st
 
         size_kb = written / 1024
         console.print(f"[green]Saved[/green] {output} ({size_kb:.1f} KB)")
+        return
+
+    # --- Formatted stdout mode (--format without --output, pipeable) ---
+    if fmt:
+        try:
+            data = client.execute(predicate, format=fmt, limit=limit, offset=offset)
+        except SynalinksError as exc:
+            err_console.print(f"[red]Error:[/red] {exc.message}")
+            sys.exit(1)
+        finally:
+            client.close()
+
+        sys.stdout.buffer.write(data)
         return
 
     # --- Default table display ---
