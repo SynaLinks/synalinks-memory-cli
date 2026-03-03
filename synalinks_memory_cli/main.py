@@ -4,13 +4,15 @@
 
 from __future__ import annotations
 
+import json
+import os
 import sys
 
 import click
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
-from synalinks_memory import AskAnswerEvent, AskStepEvent, SynalinksError, SynalinksMemory
+from synalinks_memory import ChatAnswerEvent, ChatStepEvent, SynalinksError, SynalinksMemory
 
 console = Console()
 err_console = Console(stderr=True)
@@ -30,7 +32,7 @@ def _get_client(api_key: str | None, base_url: str | None) -> SynalinksMemory:
         sys.exit(1)
 
 
-class _DefaultAskGroup(click.Group):
+class _DefaultChatGroup(click.Group):
     """Custom group that treats unknown args as a question for the agent.
 
     This lets users type ``synalinks "my question"`` or even
@@ -40,12 +42,12 @@ class _DefaultAskGroup(click.Group):
     def resolve_command(self, ctx: click.Context, args: list[str]) -> tuple:
         cmd_name = args[0] if args else None
         if cmd_name and cmd_name not in self.commands:
-            # Not a known subcommand — route everything to the hidden _ask command
-            return "_ask", self.commands["_ask"], args
+            # Not a known subcommand — route everything to the hidden _chat command
+            return "_chat", self.commands["_chat"], args
         return super().resolve_command(ctx, args)
 
 
-@click.group(cls=_DefaultAskGroup)
+@click.group(cls=_DefaultChatGroup)
 @click.option("--api-key", envvar="SYNALINKS_API_KEY", default=None, help="API key (or set SYNALINKS_API_KEY).")
 @click.option("--base-url", default=None, help="Override API base URL.")
 @click.pass_context
@@ -241,33 +243,197 @@ def upload(ctx: click.Context, file: str, name: str | None, description: str | N
 
 
 # ---------------------------------------------------------------------------
-# synalinks "<question>"  (default — no subcommand needed)
+# synalinks insert <predicate> <json>
 # ---------------------------------------------------------------------------
 
 
-@cli.command("_ask", hidden=True)
-@click.argument("question", nargs=-1, required=True)
+@cli.command("insert")
+@click.argument("predicate")
+@click.argument("row_json")
 @click.pass_context
-def _ask_cmd(ctx: click.Context, question: tuple[str, ...]) -> None:
-    """Ask the Synalinks agent a question."""
-    full_question = " ".join(question)
+def insert(ctx: click.Context, predicate: str, row_json: str) -> None:
+    """Insert a single row into a table.
+
+    ROW_JSON is a JSON object mapping column names to values, e.g.
+    '{"name": "Alice", "email": "alice@example.com"}'
+    """
+    import json
+
+    try:
+        row = json.loads(row_json)
+    except json.JSONDecodeError as exc:
+        err_console.print(f"[red]Error:[/red] Invalid JSON: {exc}")
+        sys.exit(1)
+
+    if not isinstance(row, dict):
+        err_console.print("[red]Error:[/red] ROW_JSON must be a JSON object (not array or scalar).")
+        sys.exit(1)
+
     client = _get_client(ctx.obj["api_key"], ctx.obj["base_url"])
     try:
-        answer = ""
-        with console.status("[bold cyan]Thinking...", spinner="dots") as status:
-            for event in client.ask_stream(full_question):
-                if isinstance(event, AskStepEvent):
-                    status.update(f"[bold cyan]{event.label}")
-                elif isinstance(event, AskAnswerEvent):
-                    answer = event.answer
+        result = client.insert(predicate, row)
     except SynalinksError as exc:
         err_console.print(f"[red]Error:[/red] {exc.message}")
         sys.exit(1)
     finally:
         client.close()
 
+    table = Table(title=f"Inserted into {result.predicate}")
+    table.add_column("Column", style="bold cyan")
+    table.add_column("Value")
+    for col_name, value in result.row.items():
+        table.add_row(col_name, str(value) if value is not None else "null")
+    console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# synalinks update <predicate> <filter_json> <values_json>
+# ---------------------------------------------------------------------------
+
+
+@cli.command("update")
+@click.argument("predicate")
+@click.argument("filter_json")
+@click.argument("values_json")
+@click.pass_context
+def update(ctx: click.Context, predicate: str, filter_json: str, values_json: str) -> None:
+    """Update rows in a table that match a filter.
+
+    FILTER_JSON is a JSON object of column→value conditions (ANDed), e.g.
+    '{"name": "Alice"}'
+
+    VALUES_JSON is a JSON object of column→new value pairs, e.g.
+    '{"email": "alice@new.com"}'
+    """
+    import json
+
+    try:
+        filter_dict = json.loads(filter_json)
+    except json.JSONDecodeError as exc:
+        err_console.print(f"[red]Error:[/red] Invalid filter JSON: {exc}")
+        sys.exit(1)
+
+    if not isinstance(filter_dict, dict):
+        err_console.print("[red]Error:[/red] FILTER_JSON must be a JSON object.")
+        sys.exit(1)
+
+    try:
+        values_dict = json.loads(values_json)
+    except json.JSONDecodeError as exc:
+        err_console.print(f"[red]Error:[/red] Invalid values JSON: {exc}")
+        sys.exit(1)
+
+    if not isinstance(values_dict, dict):
+        err_console.print("[red]Error:[/red] VALUES_JSON must be a JSON object.")
+        sys.exit(1)
+
+    client = _get_client(ctx.obj["api_key"], ctx.obj["base_url"])
+    try:
+        result = client.update(predicate, filter_dict, values_dict)
+    except SynalinksError as exc:
+        err_console.print(f"[red]Error:[/red] {exc.message}")
+        sys.exit(1)
+    finally:
+        client.close()
+
+    console.print(f"[green]Updated {result.updated_count} row(s)[/green] in {result.predicate}")
+    table = Table(title="Values set")
+    table.add_column("Column", style="bold cyan")
+    table.add_column("Value")
+    for col_name, value in result.values.items():
+        table.add_row(col_name, str(value) if value is not None else "null")
+    console.print(table)
+
+
+# ---------------------------------------------------------------------------
+# synalinks "<question>"  (default — no subcommand needed)
+# ---------------------------------------------------------------------------
+
+
+def _history_path() -> str:
+    """Resolve the path to the persistent chat history file."""
+    base = os.environ.get("SYNALINKS_HOME", os.path.expanduser("~/.synalinks"))
+    if not os.access(os.path.dirname(base) or os.path.expanduser("~"), os.W_OK):
+        base = os.path.join("/tmp", ".synalinks")
+    return os.path.join(base, "chat_history.json")
+
+
+@cli.command("_chat", hidden=True)
+@click.argument("question", nargs=-1, required=True)
+@click.pass_context
+def _chat_cmd(ctx: click.Context, question: tuple[str, ...]) -> None:
+    """Ask the Synalinks agent a question."""
+    full_question = " ".join(question)
+    history_file = _history_path()
+
+    # Handle /clear command
+    if full_question.strip() == "/clear":
+        try:
+            os.remove(history_file)
+        except FileNotFoundError:
+            pass
+        console.print("[green]Conversation cleared.[/green]")
+        return
+
+    # Load previous conversation history
+    messages: list[dict] = []
+    try:
+        with open(history_file) as f:
+            messages = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        pass
+
+    client = _get_client(ctx.obj["api_key"], ctx.obj["base_url"])
+    client._messages = messages
+    try:
+        answer = ""
+        with console.status("[bold cyan]Thinking...", spinner="dots") as status:
+            for event in client.chat_stream(full_question):
+                if isinstance(event, ChatStepEvent):
+                    status.update(f"[bold cyan]{event.label}")
+                elif isinstance(event, ChatAnswerEvent):
+                    answer = event.answer
+    except SynalinksError as exc:
+        err_console.print(f"[red]Error:[/red] {exc.message}")
+        sys.exit(1)
+    finally:
+        # Save updated conversation history
+        os.makedirs(os.path.dirname(history_file), exist_ok=True)
+        with open(history_file, "w") as f:
+            json.dump(client._messages, f)
+        client.close()
+
     from rich.markdown import Markdown
     console.print(Markdown(answer))
+
+
+# ---------------------------------------------------------------------------
+# synalinks serve  (MCP server)
+# ---------------------------------------------------------------------------
+
+
+@cli.command("serve")
+@click.option(
+    "--transport",
+    "-t",
+    type=click.Choice(["stdio", "sse", "streamable-http"]),
+    default="stdio",
+    show_default=True,
+    help="MCP transport protocol.",
+)
+@click.option("--host", default="127.0.0.1", show_default=True, help="Host to bind to (sse / streamable-http).")
+@click.option("--port", "-p", default=8000, show_default=True, help="Port to bind to (sse / streamable-http).")
+@click.pass_context
+def serve(ctx: click.Context, transport: str, host: str, port: int) -> None:
+    """Start an MCP server for AI assistants."""
+    from synalinks_memory_cli.mcp_server import create_server
+
+    server = create_server(ctx.obj["api_key"], ctx.obj["base_url"], host=host, port=port)
+    if transport == "stdio":
+        err_console.print("[bold cyan]Synalinks Memory MCP server (stdio)[/bold cyan]")
+    else:
+        err_console.print(f"[bold cyan]Synalinks Memory MCP server ({transport}) → http://{host}:{port}[/bold cyan]")
+    server.run(transport=transport)
 
 
 # ---------------------------------------------------------------------------

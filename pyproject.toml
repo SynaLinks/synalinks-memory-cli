@@ -9,6 +9,7 @@ dependencies = [
     "synalinks-memory>=0.0.002",
     "click>=8.1",
     "rich>=13.0",
+    "mcp[cli]>=1.0",
 ]
 
 [dependency-groups]
