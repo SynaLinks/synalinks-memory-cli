@@ -45,11 +45,11 @@ wheels = [
 
 [[package]]
 name = "certifi"
-version = "2026.1.4"
+version = "2026.2.25"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/e0/2d/a891ca51311197f6ad14a7ef42e2399f36cf2f9bd44752b3dc4eab60fdc5/certifi-2026.1.4.tar.gz", hash = "sha256:ac726dd470482006e014ad384921ed6438c457018f4b3d204aea4281258b2120", size = 154268 }
+sdist = { url = "https://files.pythonhosted.org/packages/af/2d/7bf41579a8986e348fa033a31cdd0e4121114f6bce2457e8876010b092dd/certifi-2026.2.25.tar.gz", hash = "sha256:e887ab5cee78ea814d3472169153c2d12cd43b14bd03329a39a9c6e2e80bfba7", size = 155029 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e6/ad/3cc14f097111b4de0040c83a525973216457bbeeb63739ef1ed275c1c021/certifi-2026.1.4-py3-none-any.whl", hash = "sha256:9943707519e4add1115f44c2bc244f782c0249876bf51b6599fee1ffbedd685c", size = 152900 },
+    { url = "https://files.pythonhosted.org/packages/9a/3c/c17fb3ca2d9c3acff52e30b309f538586f9f5b9c9cf454f3845fc9af4881/certifi-2026.2.25-py3-none-any.whl", hash = "sha256:027692e4402ad994f1c42e52a4997a9763c646b73e4096e4d5d6db8af1d6f0fa", size = 153684 },
 ]
 
 [[package]]
@@ -641,15 +641,15 @@ wheels = [
 
 [[package]]
 name = "rich"
-version = "14.3.2"
+version = "14.3.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "markdown-it-py" },
     { name = "pygments" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/74/99/a4cab2acbb884f80e558b0771e97e21e939c5dfb460f488d19df485e8298/rich-14.3.2.tar.gz", hash = "sha256:e712f11c1a562a11843306f5ed999475f09ac31ffb64281f73ab29ffdda8b3b8", size = 230143 }
+sdist = { url = "https://files.pythonhosted.org/packages/b3/c6/f3b320c27991c46f43ee9d856302c70dc2d0fb2dba4842ff739d5f46b393/rich-14.3.3.tar.gz", hash = "sha256:b8daa0b9e4eef54dd8cf7c86c03713f53241884e814f4e2f5fb342fe520f639b", size = 230582 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ef/45/615f5babd880b4bd7d405cc0dc348234c5ffb6ed1ea33e152ede08b2072d/rich-14.3.2-py3-none-any.whl", hash = "sha256:08e67c3e90884651da3239ea668222d19bea7b589149d8014a21c633420dbb69", size = 309963 },
+    { url = "https://files.pythonhosted.org/packages/14/25/b208c5683343959b670dc001595f2f3737e051da617f66c31f7c4fa93abc/rich-14.3.3-py3-none-any.whl", hash = "sha256:793431c1f8619afa7d3b52b2cdec859562b950ea0d4b6b505397612db8d5362d", size = 310458 },
 ]
 
 [[package]]
@@ -811,15 +811,16 @@ wheels = [
 
 [[package]]
 name = "synalinks-memory"
-version = "0.0.2"
+version = "0.0.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "httpx" },
     { name = "pydantic" },
+    { name = "tenacity" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/65/c7/a9c792b73306b14b5c52a82a189c80543816477536daebefbef10b38be2c/synalinks_memory-0.0.2.tar.gz", hash = "sha256:eec7c1225e0653988d2decf85ed18773a788ca3dd2f333ac74bd85620e74a123", size = 32625 }
+sdist = { url = "https://files.pythonhosted.org/packages/67/db/3ecf4420cdf5ff9575c4e3be820c4c25482f41644be035ab63adc4f3b8ed/synalinks_memory-0.0.5.tar.gz", hash = "sha256:2b1f34da1e5516c7004e769673b94fcf26aad8fff34b1be8d90ab28dad6a2171", size = 35244 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6e/a2/e809243d379472581c4cce77014377f2ac4eea207f5ba4f17a1a51767778/synalinks_memory-0.0.2-py3-none-any.whl", hash = "sha256:dc9e7bece8852c059ae7f87ce1e8937bf6c750ad54de26165e9bd65fe3171515", size = 12601 },
+    { url = "https://files.pythonhosted.org/packages/47/53/7b7c32bfcc96a509545db395b1add9accc0c904f8f7bff7d5f957e49cc64/synalinks_memory-0.0.5-py3-none-any.whl", hash = "sha256:35756a0f64058ea99bdfecacb8ca9573e15f35350e86daa77d2c9b6cc1c13ea4", size = 14544 },
 ]
 
 [[package]]
@@ -842,11 +843,20 @@ requires-dist = [
     { name = "click", specifier = ">=8.1" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.0" },
     { name = "rich", specifier = ">=13.0" },
-    { name = "synalinks-memory", specifier = ">=0.0.2" },
+    { name = "synalinks-memory", specifier = ">=0.0.5" },
 ]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=8.0" }]
+
+[[package]]
+name = "tenacity"
+version = "9.1.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/47/c6/ee486fd809e357697ee8a44d3d69222b344920433d3b6666ccd9b374630c/tenacity-9.1.4.tar.gz", hash = "sha256:adb31d4c263f2bd041081ab33b498309a57c77f9acf2db65aadf0898179cf93a", size = 49413 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/d7/c1/eb8f9debc45d3b7918a32ab756658a0904732f75e555402972246b0b8e71/tenacity-9.1.4-py3-none-any.whl", hash = "sha256:6095a360c919085f28c6527de529e76a06ad89b23659fa881ae0649b867a9d55", size = 28926 },
+]
 
 [[package]]
 name = "tomli"
